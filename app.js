@@ -9,6 +9,8 @@ App({
     console.log('App Hide')
   },
   globalData: {
-    hasLogin: false
+    hasLogin: false,
+    hasPermission: false,
+    openId: ''
   }
 })
