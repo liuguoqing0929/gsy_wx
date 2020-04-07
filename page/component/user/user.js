@@ -8,20 +8,23 @@ Page({
     nickname:'',
     orders:[],
     hasAddress:false,
-    address:{}
+    address:{},
+    hasNotPermission: false
   },
   onLoad(){
     var self = this;
     let that = this
-    console.log(app.globalData)
+    // console.log(app.globalData)
     // 获取用户的 不需要授权 openId
-    that.getUserOpenId()
+    // that.getUserOpenId()
     // 获取授权弹窗
-    that.getUserInfo()
+    // that.getUserInfo()
   },
   onShow(){
-    console.log('user show')
     var self = this;
+    let that = this;
+    console.log('user show')
+    that.getUserInfo()
     /**
      * 获取本地缓存 地址信息
      */
@@ -59,22 +62,19 @@ Page({
   },
   getUserInfo: function (e) {
     let that = this;
-    // console.log(e)
     // 获取用户信息
     wx.getSetting({
       success(res) {
-        // console.log("res", res)
         if (res.authSetting['scope.userInfo']) {
-          console.log("已授权=====")
           // 已经授权，可以直接调用 getUserInfo 获取头像昵称
           wx.getUserInfo({
             success(res) {
-              console.log("获取用户信息成功", res)
-              that.setData({
-                name: res.userInfo.nickName
-              })
               app.globalData.hasPermission = true
-              app.globalData.userInfo = res.userInfo
+              that.setData({
+                hasNotPermission: false
+              })
+              app.globalData.userInfo = res.userInfo,
+              that.confirmUser(res.userInfo)
             },
             fail(res) {
               console.log("获取用户信息失败", res)
@@ -82,7 +82,9 @@ Page({
           })
         } else {
           console.log("未授权=====")
-          // that.showSettingToast("请授权")
+          that.setData({
+            hasNotPermission: true
+          })
         }
       }
     })
@@ -91,8 +93,6 @@ Page({
     // 去获取openId
     wx.login({
       success: result => {
-        console.log('去获取openId')
-        console.log(result)
         wx.request({
           url: 'http://127.0.0.1:8080/user/addWechatUser',
           method: 'POST',
@@ -106,10 +106,42 @@ Page({
           },
           success(dataResult) {
             console.log(dataResult)
-            // app.globalData.openId = dataResult
           }
         })
       }
+    })
+  },
+  // 判断是否获取用户授权
+  getUserPermission: function(){
+    if (app.globalData.hasPermission)
+      return true;
+    return false;
+  },
+  // 判断当前用户是否已经存在
+  confirmUser: function(userInfo){
+    let that = this
+    userInfo.openId = app.globalData.openId
+    wx.request({
+      url: app.globalData.requestUrl + 'user/addWechatUser',
+      method: 'POST',
+      data: userInfo,
+      header: {
+        'content-type': 'application/json' // 默认值
+      },
+      success(res) {
+        console.log(res)
+      }
+    })
+  },
+  // 跳转到地址管理页面
+  addressManager: function(){
+    console.log('addressManager')
+    
+    if (getUserPermission){
+
+    }
+    wx.navigateTo({
+      url: '/page/component/address/address',
     })
   }
 })
